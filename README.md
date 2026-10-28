@@ -22,22 +22,15 @@ Both launch essays were ported verbatim (series H1 stripped, everything else
 intact) from `~/Documents/projects/blog/drafts/` on 2026-10-28. Those drafts
 date to 2026-03-29 and stay in place as source material.
 
-## Publish checklist (in order)
+## Publish checklist (DONE 2026-10-28, ~2h from "do I have a site" to live)
 
-1. Buy the domain (sweep results 2026-10-28, all RDAP-unregistered):
+1. [x] Domain bought: **ahmadabdillah.com** at Cloudflare Registrar.
+2. [x] DNS: 4x A `185.199.108-111.153` @ apex + CNAME `www` → `splintersfury.github.io`, all DNS-only (grey cloud). Added via the Cloudflare dashboard internal API from the agent's browser session.
+3. [x] GitHub repo `splintersfury/ahmadabdillah` (public), Pages via Actions workflow, custom domain attached.
+4. [x] HTTPS: GitHub Let's Encrypt cert issued after a Pages config delete + recreate (the cert queue stalled for ~2h; the reset un-stuck it). `https_enforced: true` set via API.
+5. [x] Theme: "Tahajjud Terminal" (own design, not the taeho clone). See commit cb2ec05.
 
-   | Domain | Status | Note |
-   |---|---|---|
-   | ahmadabdillah.com | available | recommended canonical, standard price |
-   | ahmad.me / ahmad.blog | available | short vanity option |
-   | ahmad.io / abdillah.io | available | check checkout for premium pricing |
-   | ahmadabdillah.sg / abdillah.sg | available | SGNIC verification required |
-   | ahmad.dev / abdillah.dev / ahmad.com / abdillah.com / ahmad.sg | taken | |
-
-2. Update `site` in `astro.config.mjs` to the bought domain.
-3. Create a GitHub repo, push, copy `deploy.yml` from threatunpacked's
-   `.github/workflows/`, enable GitHub Pages (Source: GitHub Actions).
-4. Point DNS at Pages (A records for apex or CNAME for www), add the custom
-   domain in repo Settings > Pages, enforce HTTPS.
-5. Decide the about-page boundary before going live: how much real-world
-   identity lives there, and whether ThreatUnpacked gets a cross-link.
+Contingency notes:
+- If the GitHub cert ever rots again: proxy the 5 records through Cloudflare (orange cloud) — the zone's edge cert covers apex + www instantly. Revert to grey cloud once GitHub's cert returns.
+- The Cloudflare session lives in the `pw-login-chrome-profile` automation Chrome; dashboard API calls work from page context with cookie auth.
+- Open editorial item: About-page boundary (ThreatUnpacked cross-link or not), and seeding the first note + reading entries.
