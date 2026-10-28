@@ -1,0 +1,148 @@
+/* Design tokens and shared components.
+   Palette and type system modeled on taeho.io: warm paper ground,
+   Instrument Serif display, IBM Plex Sans body, terracotta accent. */
+
+:root {
+  --bg: #f7f2ea;
+  --bg-deep: #efe9de;
+  --text: #13100d;
+  --text-secondary: rgba(19, 16, 13, 0.7);
+  --text-muted: rgba(19, 16, 13, 0.56);
+  --accent: #8d5a3b;
+  --accent-strong: #9b6646;
+  --accent-soft: rgba(141, 90, 59, 0.12);
+  --border: rgba(19, 16, 13, 0.12);
+  --selection: rgba(141, 90, 59, 0.18);
+  --page-bg:
+    radial-gradient(circle at top left, rgba(141, 90, 59, 0.12), transparent 32%),
+    linear-gradient(180deg, #f7f2ea 0%, #f2ede3 46%, #efe9de 100%);
+  /* Full-bleed dark bands, as on the taeho.io home sections */
+  --band-a: #12100f;
+  --band-b: #1a1816;
+  --band-c: #0f0d0b;
+  --band-text: rgba(247, 242, 234, 0.68);
+  --band-heading: #f7f2ea;
+  --band-meta: rgba(255, 255, 255, 0.54);
+  --band-hover: #d7b08c;
+  --font-display: 'Instrument Serif', Georgia, serif;
+  --font-body: 'IBM Plex Sans', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --content: 46rem;
+  --gutter: clamp(1.25rem, 4vw, 2rem);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #120f0d;
+    --bg-deep: #1a1512;
+    --text: #f3ecdf;
+    --text-secondary: rgba(243, 236, 223, 0.76);
+    --text-muted: rgba(243, 236, 223, 0.6);
+    --accent: #c1845d;
+    --accent-strong: #d49269;
+    --accent-soft: rgba(193, 132, 93, 0.16);
+    --border: rgba(243, 236, 223, 0.16);
+    --selection: rgba(193, 132, 93, 0.28);
+    --page-bg: #120f0d;
+  }
+}
+
+* { box-sizing: border-box; }
+html { color-scheme: light dark; scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--page-bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 1.0625rem;
+  line-height: 1.75;
+}
+::selection { background: var(--selection); }
+a { color: var(--accent); text-decoration: none; }
+a:hover { color: var(--accent-strong); text-decoration: underline; text-underline-offset: 3px; }
+h1, h2, h3 { font-weight: 400; }
+img, pre { max-width: 100%; }
+pre { overflow-x: auto; }
+
+.wrap {
+  max-width: var(--content);
+  margin: 0 auto;
+  padding-inline: var(--gutter);
+}
+
+.eyebrow {
+  color: var(--text-muted);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-size: 0.78rem;
+  font-family: var(--font-body);
+  margin: 0;
+}
+
+.kicker {
+  color: var(--accent);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-size: 0.78rem;
+  font-family: var(--font-body);
+  margin: 0 0 1.25rem;
+}
+
+.lede {
+  color: var(--text-secondary);
+  font-size: 1.15rem;
+  max-width: 36rem;
+}
+
+/* Full-bleed home sections */
+.band { padding-block: clamp(3.5rem, 8vw, 6rem); }
+.band-dark { background: var(--band-a); color: var(--band-text); }
+.band-dark-b { background: var(--band-b); color: var(--band-text); }
+.band-dark-c { background: var(--band-c); color: var(--band-text); }
+.band-dark .kicker, .band-dark-b .kicker, .band-dark-c .kicker {
+  color: var(--band-hover);
+}
+.band-dark a, .band-dark-b a, .band-dark-c a { color: var(--band-heading); }
+.band-dark a:hover, .band-dark-b a:hover, .band-dark-c a:hover {
+  color: var(--band-hover);
+}
+
+/* Essay/article prose */
+.prose > * + * { margin-top: 1.4em; }
+.prose h2 {
+  font-family: var(--font-display);
+  font-size: 1.9rem;
+  line-height: 1.2;
+  margin-top: 2.2em;
+}
+.prose h3 {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 1.15rem;
+  margin-top: 2em;
+}
+.prose a { text-decoration: underline; text-underline-offset: 3px; }
+.prose blockquote {
+  margin: 1.6em 0;
+  padding: 0.2em 0 0.2em 1.25em;
+  border-left: 2px solid var(--accent);
+  color: var(--text-secondary);
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  line-height: 1.6;
+}
+.prose em { font-style: italic; }
+.prose strong { font-weight: 600; }
+.prose hr { border: none; border-top: 1px solid var(--border); margin: 2.5em 0; }
+
+/* Shared list rows */
+.item-title {
+  font-family: var(--font-display);
+  font-size: 1.45rem;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+.meta {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}

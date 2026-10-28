@@ -1,62 +1,190 @@
 ---
 import Base from '../layouts/Base.astro';
-import { getCollection } from 'astro:content';
+import { getCollection, render } from 'astro:content';
 
 const essays = (await getCollection('essays', ({ data }) => !data.draft)).sort(
   (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
 );
+const notes = (await getCollection('notes')).sort(
+  (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
+).slice(0, 4);
+const renderedNotes = await Promise.all(
+  notes.map(async (note) => ({ note, Content: (await render(note)).Content }))
+);
+const reading = (await getCollection('reading')).sort(
+  (a, b) => b.data.readDate.valueOf() - a.data.readDate.valueOf()
+).slice(0, 4);
+
+const essayBySlug = Object.fromEntries(essays.map((e) => [e.slug, e]));
+const flag = (slug: string) => essayBySlug[slug];
+const fmt = (d: Date) => d.toLocaleDateString('en-SG', { year: 'numeric', month: 'short', day: 'numeric' });
 ---
 
 <Base>
-  <section class="intro">
+  <section class="wrap hero">
+    <p class="eyebrow">Between Sujood and Syscalls</p>
     <h1>Ahmad Abdillah</h1>
-    <p class="tagline">Between Sujood and Syscalls.</p>
-    <p>
+    <p class="lede">
       Essays on deen, craft, and the machine. Written from Singapore, where the
       security work and the spiritual work keep turning out to be the same work.
     </p>
   </section>
 
-  <section>
-    <h2>Essays</h2>
-    <ul class="post-list">
-      {essays.map((essay) => (
-        <li>
-          <a href={`/essays/${essay.slug}/`}>{essay.data.title}</a>
-          <span class="meta">
-            <time datetime={essay.data.pubDate.toISOString()}>
-              {essay.data.pubDate.toLocaleDateString('en-SG', { year: 'numeric', month: 'short', day: 'numeric' })}
-            </time>
-          </span>
-          <p class="desc">{essay.data.description}</p>
-        </li>
-      ))}
-    </ul>
+  <section class="band band-light">
+    <div class="wrap">
+      <p class="kicker">Reading by interest</p>
+      <div class="buckets">
+        <div class="bucket">
+          <p class="bucket-label">If work feels unseen</p>
+          {flag('01-no-one-was-watching') ? (
+            <a class="item-title" href={`/essays/01-no-one-was-watching/`}>No One Was Watching</a>
+          ) : (
+            <span class="item-title pending">Coming soon</span>
+          )}
+          <p class="bucket-desc">Ihsan, and why excellence does not need an audience.</p>
+        </div>
+        <div class="bucket">
+          <p class="bucket-label">If AI makes you uneasy</p>
+          {flag('02-eloquence-is-not-knowledge') ? (
+            <a class="item-title" href={`/essays/02-eloquence-is-not-knowledge/`}>Eloquence Is Not Knowledge</a>
+          ) : (
+            <span class="item-title pending">Coming soon</span>
+          )}
+          <p class="bucket-desc">Al-Ghazali's clever debater, reborn as a language model.</p>
+        </div>
+        <div class="bucket">
+          <p class="bucket-label">If you build for a living</p>
+          <span class="item-title pending">Coming soon</span>
+          <p class="bucket-desc">Craft as worship, and shipping as character.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="band band-dark">
+    <div class="wrap">
+      <p class="kicker">Topics I keep returning to</p>
+      <ol class="topics">
+        <li><span class="topic-num">01</span> Ihsan at work</li>
+        <li><span class="topic-num">02</span> Sincerity against performance</li>
+        <li><span class="topic-num">03</span> Al-Ghazali and knowledge</li>
+        <li><span class="topic-num">04</span> AI and discernment</li>
+        <li><span class="topic-num">05</span> Craft: security, engineering, building</li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="band band-dark-b">
+    <div class="wrap">
+      <p class="kicker">Short notes</p>
+      {notes.length === 0 ? (
+        <p class="empty">Nothing yet. Notes are one-to-three-paragraph captures; most never become essays, and that is the point.</p>
+      ) : (
+        <ul class="rows">
+          {renderedNotes.map(({ note, Content }) => (
+            <li>
+              <time class="meta" datetime={note.data.pubDate.toISOString()}>{fmt(note.data.pubDate)}</time>
+              <div class="note-body"><Content /></div>
+            </li>
+          ))}
+        </ul>
+      )}
+      <p class="more"><a href="/notes/">All notes</a></p>
+    </div>
+  </section>
+
+  <section class="band band-dark-c">
+    <div class="wrap">
+      <p class="kicker">Reading</p>
+      {reading.length === 0 ? (
+        <p class="empty">Nothing logged yet. What went in, where it came from, and what stayed.</p>
+      ) : (
+        <ul class="rows">
+          {reading.map((entry) => (
+            <li>
+              <a href={entry.data.source} rel="noopener">{entry.data.title}</a>
+              <p class="meta">{entry.data.takeaway}</p>
+            </li>
+          ))}
+        </ul>
+      )}
+      <p class="more"><a href="/reading/">Reading log</a></p>
+    </div>
+  </section>
+
+  <section class="band band-light">
+    <div class="wrap">
+      <p class="kicker">Where this comes from</p>
+      <p class="origin">
+        I work in security incident response by day: reading systems under stress,
+        tracing how things break. The essays here come out of the same habit turned
+        inward, on work, sincerity, and what the tradition has to say about both.
+      </p>
+      <p><a href="/about/">More about me</a></p>
+      <h2 class="closing">May it be of benefit.</h2>
+    </div>
   </section>
 </Base>
 
 <style>
-  .intro h1 { font-size: 2.2rem; margin: 0; }
-  .tagline {
-    color: var(--accent);
-    font-family: 'Fraunces Variable', Georgia, serif;
-    font-size: 1.25rem;
-    margin: 0.5rem 0 0;
+  .hero { padding-block: clamp(3rem, 9vw, 6.5rem) clamp(2.5rem, 6vw, 4.5rem); }
+  .hero h1 {
+    font-family: var(--font-display);
+    font-size: clamp(3.4rem, 11vw, 7.5rem);
+    line-height: 0.9;
+    letter-spacing: -0.05em;
+    margin: 0.6rem 0 1.6rem;
+    max-width: 8ch;
   }
-  section + section { margin-top: 3rem; }
-  h2 {
-    font-size: 1.15rem;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
+  .band-light { padding-block: clamp(3rem, 7vw, 5rem); }
+  .buckets {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+    gap: 2.5rem 2rem;
   }
-  .post-list { list-style: none; margin: 0; padding: 0; }
-  .post-list li { margin-bottom: 1.75rem; }
-  .post-list a {
-    font-family: 'Fraunces Variable', Georgia, serif;
-    font-size: 1.25rem;
-    color: #f0ede6;
+  .bucket-label {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin: 0 0 0.6rem;
   }
-  .meta { margin-left: 0.75rem; color: var(--muted); font-size: 0.85rem; }
-  .desc { margin: 0.25rem 0 0; color: var(--muted); }
+  .bucket .item-title { display: block; color: var(--text); }
+  .bucket .item-title:hover { color: var(--accent); text-decoration: none; }
+  .pending { color: var(--text-muted); }
+  .bucket-desc { color: var(--text-secondary); font-size: 0.95rem; margin: 0.5rem 0 0; }
+
+  .topics {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+    gap: 1.1rem 2.5rem;
+  }
+  .topics li {
+    font-family: var(--font-display);
+    font-size: 1.35rem;
+    line-height: 1.2;
+    color: var(--band-heading);
+  }
+  .topic-num {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--band-meta);
+    margin-right: 0.6rem;
+    vertical-align: 0.15em;
+  }
+  .empty { color: var(--band-meta); max-width: 34rem; }
+  .rows { list-style: none; margin: 0; padding: 0; }
+  .rows li + li { margin-top: 1.8rem; }
+  .rows .meta { color: var(--band-meta); }
+  .note-body { color: var(--band-text); max-width: 40rem; }
+  .note-body p { margin: 0.4rem 0 0; }
+  .more { margin: 2rem 0 0; font-size: 0.92rem; }
+  .origin { color: var(--text-secondary); max-width: 36rem; }
+  .closing {
+    font-family: var(--font-display);
+    font-size: clamp(1.9rem, 4.5vw, 3rem);
+    letter-spacing: -0.03em;
+    margin: 3rem 0 0;
+  }
 </style>

@@ -8,26 +8,37 @@ const notes = (await getCollection('notes')).sort(
 const rendered = await Promise.all(
   notes.map(async (note) => ({ note, Content: (await render(note)).Content }))
 );
+const fmt = (d: Date) => d.toLocaleDateString('en-SG', { year: 'numeric', month: 'long', day: 'numeric' });
 ---
 
 <Base title="Notes · Ahmad Abdillah">
-  <h1>Notes</h1>
-  <p class="hint">Short captures. Most never become essays, and that is the point.</p>
-  {rendered.length === 0 && <p class="empty">Nothing here yet.</p>}
-  {rendered.map(({ note, Content }) => (
-    <article class="note">
-      <time datetime={note.data.pubDate.toISOString()}>
-        {note.data.pubDate.toLocaleDateString('en-SG', { year: 'numeric', month: 'short', day: 'numeric' })}
-      </time>
-      <Content />
-    </article>
-  ))}
+  <div class="wrap page">
+    <p class="kicker">Notes</p>
+    <h1>Short captures.</h1>
+    <p class="lede">One to three paragraphs, zero structure. Most never become essays, and that is the point.</p>
+    {rendered.length === 0 && <p class="empty">Nothing here yet.</p>}
+    <div class="feed">
+      {rendered.map(({ note, Content }) => (
+        <article class="note">
+          <time class="meta" datetime={note.data.pubDate.toISOString()}>{fmt(note.data.pubDate)}</time>
+          <Content />
+        </article>
+      ))}
+    </div>
+  </div>
 </Base>
 
 <style>
-  h1 { font-size: 1.8rem; }
-  .hint { color: var(--muted); font-style: italic; }
-  .empty { color: var(--muted); }
-  .note { margin-bottom: 2rem; }
-  .note time { display: block; color: var(--muted); font-size: 0.85rem; margin-bottom: 0.25rem; }
+  .page { padding-block: clamp(2.5rem, 6vw, 4rem) 4rem; }
+  h1 {
+    font-family: var(--font-display);
+    font-size: clamp(2.4rem, 6vw, 3.6rem);
+    line-height: 1;
+    letter-spacing: -0.04em;
+    margin: 0 0 1rem;
+  }
+  .empty { color: var(--text-muted); }
+  .feed { margin-top: 2.5rem; }
+  .note { padding-block: 1.8rem; border-top: 1px solid var(--border); }
+  .note p { margin: 0.4rem 0 0; max-width: 40rem; }
 </style>

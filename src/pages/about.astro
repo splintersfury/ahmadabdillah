@@ -3,24 +3,39 @@ import Base from '../layouts/Base.astro';
 ---
 
 <Base title="About · Ahmad Abdillah">
-  <h1>About</h1>
-  <!--
-    Identity page: says who is talking so essays do not have to.
-    Decide consciously before publishing:
-    - how much real-world identity lives here (name is already committed by the domain)
-    - whether ThreatUnpacked gets a cross-link from here, or stays fully separate
-    - nothing about employer, tooling specifics, or anything interview-hostile
-  -->
-  <p>
-    I am Ahmad Abdillah. By day I work in security incident response; the rest of
-    the time I read, write, and try to do both with ihsan.
-  </p>
-  <p>
-    This site holds the personal voice: essays on deen, craft, and the machine,
-    plus shorter notes and a reading log. The technical research lives elsewhere.
-  </p>
+  <div class="wrap page">
+    <p class="kicker">About</p>
+    <h1>Who is talking.</h1>
+    <!--
+      Identity page: says who is talking so essays do not have to.
+      Decide consciously before publishing:
+      - how much real-world identity lives here (name is already committed by the domain)
+      - whether ThreatUnpacked gets a cross-link from here, or stays fully separate
+      - nothing about employer, tooling specifics, or anything interview-hostile
+    -->
+    <div class="prose">
+      <p>
+        I am Ahmad Abdillah. By day I work in security incident response: reading
+        systems under stress, tracing how they break. The rest of the time I read,
+        write, and try to do both with ihsan.
+      </p>
+      <p>
+        This site holds the personal voice: essays on deen, craft, and the machine,
+        plus shorter notes and a reading log. The technical research lives elsewhere,
+        and stays there.
+      </p>
+      <p>The fastest way to follow along is the <a href="/rss.xml">RSS feed</a>.</p>
+    </div>
+  </div>
 </Base>
 
 <style>
-  h1 { font-size: 1.8rem; }
+  .page { padding-block: clamp(2.5rem, 6vw, 4rem) 4rem; }
+  h1 {
+    font-family: var(--font-display);
+    font-size: clamp(2.4rem, 6vw, 3.6rem);
+    line-height: 1;
+    letter-spacing: -0.04em;
+    margin: 0 0 2rem;
+  }
 </style>

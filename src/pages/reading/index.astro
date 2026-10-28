@@ -5,38 +5,46 @@ import { getCollection } from 'astro:content';
 const entries = (await getCollection('reading')).sort(
   (a, b) => b.data.readDate.valueOf() - a.data.readDate.valueOf()
 );
+const fmt = (d: Date) => d.toLocaleDateString('en-SG', { year: 'numeric', month: 'short' });
 ---
 
 <Base title="Reading · Ahmad Abdillah">
-  <h1>Reading</h1>
-  <p class="hint">What went in, where it came from, and what stayed.</p>
-  {entries.length === 0 && <p class="empty">Nothing logged yet.</p>}
-  <ul class="post-list">
-    {entries.map((entry) => (
-      <li>
-        <p class="entry-title">
-          {entry.data.author && <span>{entry.data.author}, </span>}
-          <a href={entry.data.source} rel="noopener">{entry.data.title}</a>
-          <span class="meta">
-            <time datetime={entry.data.readDate.toISOString()}>
-              {entry.data.readDate.toLocaleDateString('en-SG', { year: 'numeric', month: 'short' })}
-            </time>
-          </span>
-        </p>
-        <p class="desc">{entry.data.takeaway}</p>
-      </li>
-    ))}
-  </ul>
+  <div class="wrap page">
+    <p class="kicker">Reading</p>
+    <h1>What went in.</h1>
+    <p class="lede">Everything consumed, where it came from, and the one thing that stayed.</p>
+    {entries.length === 0 && <p class="empty">Nothing logged yet.</p>}
+    <ul class="list">
+      {entries.map((entry) => (
+        <li>
+          <p class="row-title">
+            {entry.data.author && <span class="author">{entry.data.author}, </span>}
+            <a href={entry.data.source} rel="noopener">{entry.data.title}</a>
+            <time class="meta" datetime={entry.data.readDate.toISOString()}>{fmt(entry.data.readDate)}</time>
+          </p>
+          <p class="desc">{entry.data.takeaway}</p>
+        </li>
+      ))}
+    </ul>
+  </div>
 </Base>
 
 <style>
-  h1 { font-size: 1.8rem; }
-  .hint { color: var(--muted); font-style: italic; }
-  .empty { color: var(--muted); }
-  .post-list { list-style: none; margin: 0; padding: 0; }
-  .post-list li { margin-bottom: 1.5rem; }
-  .entry-title { margin: 0; font-family: 'Fraunces Variable', Georgia, serif; font-size: 1.1rem; }
-  .entry-title a { color: #f0ede6; }
-  .meta { margin-left: 0.5rem; color: var(--muted); font-size: 0.85rem; font-family: 'Inter Variable', sans-serif; }
-  .desc { margin: 0.25rem 0 0; color: var(--muted); }
+  .page { padding-block: clamp(2.5rem, 6vw, 4rem) 4rem; }
+  h1 {
+    font-family: var(--font-display);
+    font-size: clamp(2.4rem, 6vw, 3.6rem);
+    line-height: 1;
+    letter-spacing: -0.04em;
+    margin: 0 0 1rem;
+  }
+  .empty { color: var(--text-muted); }
+  .list { list-style: none; margin: 2.5rem 0 0; padding: 0; }
+  .list li { padding-block: 1.6rem; border-top: 1px solid var(--border); }
+  .row-title { margin: 0; font-size: 1.05rem; }
+  .author { color: var(--text-secondary); }
+  .row-title a { color: var(--text); }
+  .row-title a:hover { color: var(--accent); text-decoration: none; }
+  .row-title .meta { margin-left: 0.6rem; }
+  .desc { margin: 0.4rem 0 0; color: var(--text-secondary); max-width: 38rem; }
 </style>
