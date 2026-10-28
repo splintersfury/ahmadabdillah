@@ -1,0 +1,42 @@
+---
+import Base from '../../layouts/Base.astro';
+import { getCollection } from 'astro:content';
+
+const entries = (await getCollection('reading')).sort(
+  (a, b) => b.data.readDate.valueOf() - a.data.readDate.valueOf()
+);
+---
+
+<Base title="Reading · Ahmad Abdillah">
+  <h1>Reading</h1>
+  <p class="hint">What went in, where it came from, and what stayed.</p>
+  {entries.length === 0 && <p class="empty">Nothing logged yet.</p>}
+  <ul class="post-list">
+    {entries.map((entry) => (
+      <li>
+        <p class="entry-title">
+          {entry.data.author && <span>{entry.data.author}, </span>}
+          <a href={entry.data.source} rel="noopener">{entry.data.title}</a>
+          <span class="meta">
+            <time datetime={entry.data.readDate.toISOString()}>
+              {entry.data.readDate.toLocaleDateString('en-SG', { year: 'numeric', month: 'short' })}
+            </time>
+          </span>
+        </p>
+        <p class="desc">{entry.data.takeaway}</p>
+      </li>
+    ))}
+  </ul>
+</Base>
+
+<style>
+  h1 { font-size: 1.8rem; }
+  .hint { color: var(--muted); font-style: italic; }
+  .empty { color: var(--muted); }
+  .post-list { list-style: none; margin: 0; padding: 0; }
+  .post-list li { margin-bottom: 1.5rem; }
+  .entry-title { margin: 0; font-family: 'Fraunces Variable', Georgia, serif; font-size: 1.1rem; }
+  .entry-title a { color: #f0ede6; }
+  .meta { margin-left: 0.5rem; color: var(--muted); font-size: 0.85rem; font-family: 'Inter Variable', sans-serif; }
+  .desc { margin: 0.25rem 0 0; color: var(--muted); }
+</style>

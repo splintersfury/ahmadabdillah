@@ -1,0 +1,40 @@
+---
+import Base from '../../layouts/Base.astro';
+import { getCollection } from 'astro:content';
+
+const essays = (await getCollection('essays', ({ data }) => !data.draft)).sort(
+  (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
+);
+---
+
+<Base title="Essays · Ahmad Abdillah">
+  <h1>Essays</h1>
+  <ul class="post-list">
+    {essays.map((essay) => (
+      <li>
+        <a href={`/essays/${essay.slug}/`}>{essay.data.title}</a>
+        <span class="meta">
+          <time datetime={essay.data.pubDate.toISOString()}>
+            {essay.data.pubDate.toLocaleDateString('en-SG', { year: 'numeric', month: 'short', day: 'numeric' })}
+          </time>
+          {essay.data.series && <span class="series">{essay.data.series}</span>}
+        </span>
+        <p class="desc">{essay.data.description}</p>
+      </li>
+    ))}
+  </ul>
+</Base>
+
+<style>
+  h1 { font-size: 1.8rem; }
+  .post-list { list-style: none; margin: 0; padding: 0; }
+  .post-list li { margin-bottom: 1.75rem; }
+  .post-list a {
+    font-family: 'Fraunces Variable', Georgia, serif;
+    font-size: 1.25rem;
+    color: #f0ede6;
+  }
+  .meta { margin-left: 0.75rem; color: var(--muted); font-size: 0.85rem; }
+  .series { margin-left: 0.5rem; font-style: italic; }
+  .desc { margin: 0.25rem 0 0; color: var(--muted); }
+</style>
