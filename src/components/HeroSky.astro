@@ -1,0 +1,120 @@
+<canvas id="hero-sky" aria-hidden="true"></canvas>
+
+<style>
+  #hero-sky {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+    z-index: 0;
+  }
+</style>
+
+<script>
+  // Tahajjud sky: a slow drift of stars in the site's cream and amber, with
+  // the eight-point star motif as a distant wireframe. Loads three.js only
+  // when the hero is on screen, skips reduced-motion users entirely, and
+  // pauses whenever the tab or hero is not visible.
+  const boot = async () => {
+    const canvas = document.getElementById('hero-sky') as HTMLCanvasElement | null;
+    if (!canvas || !canvas.parentElement) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    const THREE = await import('three');
+    let renderer: import('three').WebGLRenderer;
+    try {
+      renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: false, powerPreference: 'low-power' });
+    } catch {
+      return;
+    }
+    const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+    renderer.setPixelRatio(dpr);
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 100);
+    camera.position.z = 8;
+
+    // stars
+    const N = 900;
+    const pos = new Float32Array(N * 3);
+    const col = new Float32Array(N * 3);
+    const cream = [0.94, 0.91, 0.86];
+    const amber = [0.87, 0.65, 0.37];
+    for (let i = 0; i < N; i++) {
+      const r = 5 + Math.random() * 9;
+      const theta = Math.random() * Math.PI * 2;
+      const phi = Math.acos(2 * Math.random() - 1);
+      pos[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+      pos[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta) * 0.6;
+      pos[i * 3 + 2] = -Math.random() * 14;
+      const base = Math.random() < 0.18 ? amber : cream;
+      const dim = 0.25 + Math.random() * 0.55;
+      col[i * 3] = base[0] * dim;
+      col[i * 3 + 1] = base[1] * dim;
+      col[i * 3 + 2] = base[2] * dim;
+    }
+    const starGeo = new THREE.BufferGeometry();
+    starGeo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    starGeo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+    const stars = new THREE.Points(
+      starGeo,
+      new THREE.PointsMaterial({ size: 0.045, vertexColors: true, transparent: true, opacity: 0.9, sizeAttenuation: true })
+    );
+    scene.add(stars);
+
+    // eight-point star: two squares, one rotated 45deg, as distant wireframe
+    const starGroup = new THREE.Group();
+    const edge = new THREE.EdgesGeometry(new THREE.PlaneGeometry(2.6, 2.6));
+    const mat = new THREE.LineBasicMaterial({ color: 0xdfa75f, transparent: true, opacity: 0.35 });
+    const s1 = new THREE.LineSegments(edge, mat);
+    const s2 = new THREE.LineSegments(edge, mat);
+    s2.rotation.z = Math.PI / 4;
+    starGroup.add(s1, s2);
+    starGroup.position.set(2.6, 0.4, -4);
+    starGroup.rotation.y = -0.35;
+    scene.add(starGroup);
+
+    let mx = 0, my = 0;
+    window.addEventListener('pointermove', (e) => {
+      mx = (e.clientX / window.innerWidth) * 2 - 1;
+      my = (e.clientY / window.innerHeight) * 2 - 1;
+    }, { passive: true });
+
+    const resize = () => {
+      const w = canvas.parentElement!.clientWidth;
+      const h = canvas.parentElement!.clientHeight;
+      renderer.setSize(w, h, false);
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+    };
+    resize();
+    window.addEventListener('resize', resize);
+
+    let heroVisible = true;
+    new IntersectionObserver(([entry]) => {
+      heroVisible = entry.isIntersecting;
+    }).observe(canvas);
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) tick(performance.now());
+    });
+
+    let last = performance.now();
+    function tick(now: number) {
+      const dt = Math.min((now - last) / 1000, 0.05);
+      last = now;
+      stars.rotation.y += dt * 0.008;
+      starGroup.rotation.y += dt * 0.05;
+      starGroup.rotation.x += dt * 0.02;
+      camera.position.x += (mx * 0.35 - camera.position.x) * 0.04;
+      camera.position.y += (-my * 0.25 - camera.position.y) * 0.04;
+      camera.lookAt(0, 0, -4);
+      renderer.render(scene, camera);
+      if (heroVisible && !document.hidden) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  };
+
+  const idle = (window as any).requestIdleCallback ?? ((cb: () => void) => setTimeout(cb, 300));
+  idle(() => { void boot(); });
+</script>
