@@ -12,10 +12,12 @@
 </style>
 
 <script>
-  // Tahajjud sky: a slow drift of stars in the site's cream and amber, with
-  // the eight-point star motif as a distant wireframe. Loads three.js only
-  // when the hero is on screen, skips reduced-motion users entirely, and
-  // pauses whenever the tab or hero is not visible.
+  // "Ghazali's sky": the sphere of fixed stars slowly turning, an octagram
+  // traced between the studied stars, and below it all, the sky's rippling
+  // reflection in dark water. After al-Ghazali, who held that the heavens
+  // are worth reading and divination is not. three.js is dynamically
+  // imported after idle, homepage-only; skipped under prefers-reduced-motion;
+  // rendering pauses when the hero or tab is not visible.
   const boot = async () => {
     const canvas = document.getElementById('hero-sky') as HTMLCanvasElement | null;
     if (!canvas || !canvas.parentElement) return;
@@ -28,52 +30,157 @@
     } catch {
       return;
     }
-    const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
-    renderer.setPixelRatio(dpr);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 100);
-    camera.position.z = 8;
+    camera.position.set(0, 0, 8);
 
-    // stars
-    const N = 900;
+    const HORIZON = -1.15; // world y of the water line
+
+    // One shader for all points; uMirror=0 renders the sky (twinkling),
+    // uMirror=1 renders the water reflection (mirrored about the horizon,
+    // sheared by two ripple waves, dimmer and cool-tinted).
+    const vert = /* glsl */ `
+      uniform float uTime;
+      uniform float uHorizon;
+      uniform float uMirror;
+      uniform float uReveal;
+      attribute float aSize;
+      attribute vec3 aColor;
+      attribute float aPhase;
+      varying vec3 vColor;
+      varying float vAlpha;
+      void main() {
+        vec3 p = position;
+        float tw = 0.72 + 0.28 * sin(uTime * (0.5 + aPhase * 0.9) + aPhase * 21.0);
+        float reveal = clamp(uReveal * 1.5 - aPhase * 0.5, 0.0, 1.0);
+        reveal = reveal * reveal * (3.0 - 2.0 * reveal);
+        if (uMirror > 0.5) {
+          p.y = 2.0 * uHorizon - p.y;
+          float d = max(uHorizon - p.y, 0.0);
+          p.x += sin(uTime * 0.9 + position.x * 2.3 + position.y * 1.4) * 0.055
+               + sin(uTime * 0.37 + position.y * 0.8) * 0.032;
+          p.y += sin(uTime * 0.55 + position.x * 1.1) * 0.03;
+          vAlpha = reveal * 0.8 * clamp(1.0 - d / 6.0, 0.15, 1.0);
+          vColor = aColor * vec3(0.8, 0.88, 1.0) * 0.95;
+        } else {
+          vAlpha = reveal * mix(0.35, 1.0, tw);
+          vColor = aColor;
+        }
+        vec4 mv = modelViewMatrix * vec4(p, 1.0);
+        gl_PointSize = aSize * (46.0 / -mv.z);
+        gl_Position = projectionMatrix * mv;
+      }
+    `;
+    const frag = /* glsl */ `
+      varying vec3 vColor;
+      varying float vAlpha;
+      void main() {
+        float d = length(gl_PointCoord - 0.5);
+        float a = smoothstep(0.5, 0.06, d) * vAlpha;
+        if (a < 0.012) discard;
+        gl_FragColor = vec4(vColor, a);
+      }
+    `;
+    const uniforms = () => ({
+      uTime: { value: 0 },
+      uHorizon: { value: HORIZON },
+      uMirror: { value: 0 },
+      uReveal: { value: 0 },
+    });
+
+    // ── fixed stars ──────────────────────────────────────────────
+    const N = 950;
     const pos = new Float32Array(N * 3);
     const col = new Float32Array(N * 3);
+    const size = new Float32Array(N);
+    const phase = new Float32Array(N);
     const cream = [0.94, 0.91, 0.86];
     const amber = [0.87, 0.65, 0.37];
     for (let i = 0; i < N; i++) {
-      const r = 5 + Math.random() * 9;
-      const theta = Math.random() * Math.PI * 2;
-      const phi = Math.acos(2 * Math.random() - 1);
-      pos[i * 3] = r * Math.sin(phi) * Math.cos(theta);
-      pos[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta) * 0.6;
-      pos[i * 3 + 2] = -Math.random() * 14;
+      pos[i * 3] = (Math.random() - 0.5) * 24;
+      pos[i * 3 + 1] = HORIZON + 0.2 + Math.random() * 8.5;
+      pos[i * 3 + 2] = -2 - Math.random() * 13;
       const base = Math.random() < 0.18 ? amber : cream;
-      const dim = 0.25 + Math.random() * 0.55;
+      const dim = 0.28 + Math.random() * 0.6;
       col[i * 3] = base[0] * dim;
       col[i * 3 + 1] = base[1] * dim;
       col[i * 3 + 2] = base[2] * dim;
+      size[i] = 0.35 + Math.random() * 0.9;
+      phase[i] = Math.random();
     }
     const starGeo = new THREE.BufferGeometry();
     starGeo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-    starGeo.setAttribute('color', new THREE.BufferAttribute(col, 3));
-    const stars = new THREE.Points(
-      starGeo,
-      new THREE.PointsMaterial({ size: 0.045, vertexColors: true, transparent: true, opacity: 0.9, sizeAttenuation: true })
-    );
-    scene.add(stars);
+    starGeo.setAttribute('aColor', new THREE.BufferAttribute(col, 3));
+    starGeo.setAttribute('aSize', new THREE.BufferAttribute(size, 1));
+    starGeo.setAttribute('aPhase', new THREE.BufferAttribute(phase, 1));
 
-    // eight-point star: two squares, one rotated 45deg, as distant wireframe
-    const starGroup = new THREE.Group();
-    const edge = new THREE.EdgesGeometry(new THREE.PlaneGeometry(2.6, 2.6));
-    const mat = new THREE.LineBasicMaterial({ color: 0xdfa75f, transparent: true, opacity: 0.35 });
-    const s1 = new THREE.LineSegments(edge, mat);
-    const s2 = new THREE.LineSegments(edge, mat);
-    s2.rotation.z = Math.PI / 4;
-    starGroup.add(s1, s2);
-    starGroup.position.set(2.6, 0.4, -4);
-    starGroup.rotation.y = -0.35;
-    scene.add(starGroup);
+    // ── the traced figure: an octagram between the studied stars ──
+    // two squares, one rotated 45deg, plus eight vertex stars that ignite
+    // in sequence while the lines draw themselves.
+    const C = { x: 2.5, y: 1.35, z: -5.5, s: 1.55 };
+    const sq = (rot: number): [number, number][] =>
+      [0, 1, 2, 3].map((i) => {
+        const a = rot + (i * Math.PI) / 2 + Math.PI / 4;
+        return [C.x + C.s * Math.cos(a), C.y + C.s * Math.sin(a)];
+      });
+    const A = sq(0), B = sq(Math.PI / 4);
+    const linePts: number[] = [];
+    for (const S of [A, B]) {
+      for (let i = 0; i < 4; i++) {
+        const [x1, y1] = S[i];
+        const [x2, y2] = S[(i + 1) % 4];
+        linePts.push(x1, y1, C.z, x2, y2, C.z);
+      }
+    }
+    const lineGeo = new THREE.BufferGeometry();
+    lineGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(linePts), 3));
+    const lines = new THREE.LineSegments(
+      lineGeo,
+      new THREE.LineBasicMaterial({ color: 0xdfa75f, transparent: true, opacity: 0.28 })
+    );
+    lines.geometry.setDrawRange(0, 0);
+
+    const VN = 8;
+    const vPos = new Float32Array(VN * 3);
+    const vCol = new Float32Array(VN * 3);
+    const vSize = new Float32Array(VN);
+    const vPhase = new Float32Array(VN);
+    [...A, ...B].forEach(([x, y], i) => {
+      vPos[i * 3] = x; vPos[i * 3 + 1] = y; vPos[i * 3 + 2] = C.z;
+      vCol[i * 3] = 0.95; vCol[i * 3 + 1] = 0.74; vCol[i * 3 + 2] = 0.45;
+      vSize[i] = 1.5 + (i % 2) * 0.5;
+      vPhase[i] = 0.25 + i * 0.07;
+    });
+    const vertGeo = new THREE.BufferGeometry();
+    vertGeo.setAttribute('position', new THREE.BufferAttribute(vPos, 3));
+    vertGeo.setAttribute('aColor', new THREE.BufferAttribute(vCol, 3));
+    vertGeo.setAttribute('aSize', new THREE.BufferAttribute(vSize, 1));
+    vertGeo.setAttribute('aPhase', new THREE.BufferAttribute(vPhase, 1));
+
+    const skyMat = new THREE.ShaderMaterial({
+      uniforms: uniforms(),
+      vertexShader: vert, fragmentShader: frag,
+      transparent: true, depthWrite: false,
+    });
+    const reflMat = new THREE.ShaderMaterial({
+      uniforms: { ...uniforms(), uMirror: { value: 1 } },
+      vertexShader: vert, fragmentShader: frag,
+      transparent: true, depthWrite: false,
+    });
+
+    const celestial = new THREE.Group();
+    celestial.add(new THREE.Points(starGeo, skyMat));
+    celestial.add(new THREE.Points(vertGeo, skyMat));
+    celestial.add(lines);
+    scene.add(celestial);
+
+    // the water: same geometry, mirrored and rippled in the shader
+    const water = new THREE.Group();
+    water.add(new THREE.Points(starGeo, reflMat));
+    water.add(new THREE.Points(vertGeo, reflMat));
+    scene.add(water);
 
     let mx = 0, my = 0;
     window.addEventListener('pointermove', (e) => {
@@ -100,15 +207,25 @@
     });
 
     let last = performance.now();
+    const t0 = last;
     function tick(now: number) {
       const dt = Math.min((now - last) / 1000, 0.05);
       last = now;
-      stars.rotation.y += dt * 0.008;
-      starGroup.rotation.y += dt * 0.05;
-      starGroup.rotation.x += dt * 0.02;
-      camera.position.x += (mx * 0.35 - camera.position.x) * 0.04;
-      camera.position.y += (-my * 0.25 - camera.position.y) * 0.04;
-      camera.lookAt(0, 0, -4);
+      const t = (now - t0) / 1000;
+
+      celestial.rotation.y = Math.sin(t * 0.02) * 0.05 + t * 0.004;
+      skyMat.uniforms.uTime.value = t;
+      skyMat.uniforms.uReveal.value = Math.min(t / 6, 1);
+      reflMat.uniforms.uTime.value = t;
+      reflMat.uniforms.uReveal.value = Math.min(Math.max((t - 1.2) / 6, 0), 1);
+
+      // the figure traces itself, segment by segment
+      const seg = Math.min(8, Math.floor(t / 0.9));
+      lines.geometry.setDrawRange(0, seg * 2);
+
+      camera.position.x += (mx * 0.3 - camera.position.x) * 0.04;
+      camera.position.y += (-my * 0.22 - camera.position.y) * 0.04;
+      camera.lookAt(0, 0.1, -5);
       renderer.render(scene, camera);
       if (heroVisible && !document.hidden) requestAnimationFrame(tick);
     }
