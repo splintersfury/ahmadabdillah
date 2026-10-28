@@ -38,15 +38,25 @@ const nav = [
   <body>
     <header>
       <div class="wrap bar">
-        <a class="wordmark" href="/">Ahmad Abdillah</a>
-        <nav>
-          {nav.map((item) => <a href={item.href}>{item.label}</a>)}
-        </nav>
+        <a class="wordmark" href="/">
+          <svg class="mark" viewBox="0 0 24 24" aria-hidden="true">
+            <rect x="6.5" y="6.5" width="11" height="11" />
+            <rect x="6.5" y="6.5" width="11" height="11" transform="rotate(45 12 12)" />
+          </svg>
+          <span>Ahmad Abdillah</span>
+        </a>
+        <div class="bar-right">
+          <span id="prayer-status" class="mono status" aria-live="off"></span>
+          <nav>
+            {nav.map((item) => <a href={item.href}>{item.label}</a>)}
+          </nav>
+        </div>
       </div>
     </header>
     <slot />
     <footer>
       <div class="wrap">
+        <p class="foot-mark" aria-hidden="true">&#1758;</p>
         <p class="foot-name">Ahmad Abdillah</p>
         <p class="foot-line">I write about deen, craft, and the machine.</p>
         <p class="foot-links">
@@ -59,6 +69,93 @@ const nav = [
     </footer>
   </body>
 </html>
+
+<script>
+  // ── Next prayer, Singapore (header status line) ──────────────────
+  // PrayTimes solar algorithm, pinned to UTC+8 (Singapore has no DST), so
+  // the line is correct for visitors in any timezone. Angles fitted to the
+  // MUIS printed timetable: Fajr 18deg, Isha 18deg, Shafi'i Asr.
+  const LAT = 1.3521, LNG = 103.8198, TZ = 8;
+  const dtr = (d) => d * Math.PI / 180, rtd = (r) => r * 180 / Math.PI;
+  const fix = (a, b) => { const v = a - b * Math.floor(a / b); return v < 0 ? v + b : v; };
+
+  function julian(y, m, d) {
+    if (m <= 2) { y -= 1; m += 12; }
+    const A = Math.floor(y / 100), B = 2 - A + Math.floor(A / 4);
+    return Math.floor(365.25 * (y + 4716)) + Math.floor(30.6001 * (m + 1)) + d + B - 1524.5;
+  }
+  function sunPos(jd) {
+    const D = jd - 2451545.0;
+    const g = fix(357.529 + 0.98560028 * D, 360);
+    const q = fix(280.459 + 0.98564736 * D, 360);
+    const L = fix(q + 1.915 * Math.sin(dtr(g)) + 0.020 * Math.sin(dtr(2 * g)), 360);
+    const e = 23.439 - 0.00000036 * D;
+    const RA = fix(rtd(Math.atan2(Math.cos(dtr(e)) * Math.sin(dtr(L)), Math.cos(dtr(L)))) / 15, 24);
+    return { decl: Math.asin(Math.sin(dtr(e)) * Math.sin(dtr(L))), eqt: q / 15 - RA };
+  }
+  // minutes-of-day in Singapore wall time for one civil date
+  function timesForDay(Y, M, D) {
+    const jDate = julian(Y, M, D) - LNG / (15 * 24);
+    const midDay = (t) => fix(12 - sunPos(jDate + t).eqt, 24);
+    const angleTime = (angle, t, ccw) => {
+      const decl = sunPos(jDate + t).decl;
+      const v = (-Math.sin(dtr(angle)) - Math.sin(decl) * Math.sin(dtr(LAT)))
+              / (Math.cos(decl) * Math.cos(dtr(LAT)));
+      if (v > 1 || v < -1) return NaN;
+      return midDay(t) + (ccw ? -1 : 1) * rtd(Math.acos(v)) / 15;
+    };
+    const asrTime = (t) => {
+      const decl = sunPos(jDate + t).decl;
+      const angle = -rtd(Math.atan(1 / (1 + Math.tan(Math.abs(dtr(LAT - decl))))));
+      return angleTime(angle, t);
+    };
+    const refine = (fn, t) => { for (let i = 0; i < 3; i++) t = fn(t); return t; };
+    const toMin = (h) => Math.round(fix(h + TZ - LNG / 15, 24) * 60);
+    const dhuhr = refine((t) => midDay(t), 12);
+    return {
+      fajr: toMin(refine((t) => angleTime(18, t, true), 5)),
+      dhuhr: toMin(dhuhr),
+      asr: toMin(refine((t) => asrTime(t), 15)),
+      maghrib: toMin(refine((t) => angleTime(0.833, t), 18)),
+      isha: toMin(refine((t) => angleTime(18, t), 19)),
+    };
+  }
+  const ORDER = [
+    ['fajr', 'Fajr'], ['dhuhr', 'Dhuhr'], ['asr', 'Asr'],
+    ['maghrib', 'Maghrib'], ['isha', 'Isha'],
+  ];
+
+  const el = document.getElementById('prayer-status');
+  function render() {
+    if (!el) return;
+    const sg = new Date(Date.now() + 480 * 60000); // SG wall clock, read via UTC fields
+    const nowMin = sg.getUTCHours() * 60 + sg.getUTCMinutes();
+    const dayAt = (shift) => {
+      const d = new Date(sg);
+      d.setUTCDate(d.getUTCDate() + shift);
+      return timesForDay(d.getUTCFullYear(), d.getUTCMonth() + 1, d.getUTCDate());
+    };
+    let found = null;
+    for (const shift of [0, 1]) {
+      const t = dayAt(shift);
+      for (const [key, label] of ORDER) {
+        if (Number.isFinite(t[key]) && (shift === 1 || t[key] > nowMin)) {
+          found = { label, min: t[key] };
+          break;
+        }
+      }
+      if (found) break;
+    }
+    if (found) {
+      const hh = String(Math.floor(found.min / 60)).padStart(2, '0');
+      const mm = String(found.min % 60).padStart(2, '0');
+      el.textContent = `SG \u00b7 next ${found.label} ${hh}:${mm}`;
+    }
+  }
+
+  render();
+  setInterval(render, 60e3);
+</script>
 
 <style>
   header {
@@ -73,26 +170,46 @@ const nav = [
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding-block: 0.9rem;
+    gap: 1rem;
+    padding-block: 0.85rem;
   }
   .wordmark {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
     font-family: var(--font-display);
     font-size: 1.15rem;
     color: var(--text);
   }
   .wordmark:hover { color: var(--accent); text-decoration: none; }
-  nav { display: flex; gap: 1.4rem; }
-  nav a {
-    color: var(--text-muted);
-    font-size: 0.92rem;
+  .mark {
+    width: 1rem;
+    height: 1rem;
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 1.6;
   }
+  .bar-right { display: flex; align-items: center; gap: 1.4rem; }
+  .status {
+    color: var(--machine);
+    letter-spacing: 0.1em;
+    font-size: 0.72rem;
+    white-space: nowrap;
+  }
+  @media (max-width: 52rem) {
+    .status { display: none; }
+  }
+  nav { display: flex; gap: 1.4rem; }
+  nav a { color: var(--text-muted); font-size: 0.92rem; }
   nav a:hover { color: var(--accent); text-decoration: none; }
   footer {
     border-top: 1px solid var(--border);
     padding-block: 3rem 3.5rem;
     background: var(--bg);
+    text-align: center;
   }
-  .foot-name { margin: 0; font-family: var(--font-display); font-size: 1.2rem; }
+  .foot-mark { margin: 0; color: var(--accent); font-size: 1.4rem; }
+  .foot-name { margin: 0.6rem 0 0; font-family: var(--font-display); font-size: 1.2rem; }
   .foot-line { margin: 0.3rem 0 0; color: var(--text-secondary); }
   .foot-links { margin: 1rem 0 0; font-size: 0.92rem; }
   .foot-copy { margin: 1.5rem 0 0; color: var(--text-muted); font-size: 0.85rem; }

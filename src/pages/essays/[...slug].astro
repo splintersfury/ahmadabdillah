@@ -18,7 +18,7 @@ const dateFmt = { year: 'numeric', month: 'long', day: 'numeric' } as const;
 
 <Base title={`${essay.data.title} · Ahmad Abdillah`} description={essay.data.description}>
   <article class="wrap page">
-    <p class="kicker">{essay.data.series ?? 'Essay'}</p>
+    <p class="kicker">{essay.data.series ? `// ${essay.data.series}` : '// essay'}</p>
     <h1>{essay.data.title}</h1>
     <p class="meta"><time datetime={essay.data.pubDate.toISOString()}>{essay.data.pubDate.toLocaleDateString('en-SG', dateFmt)}</time></p>
     <div class="prose">

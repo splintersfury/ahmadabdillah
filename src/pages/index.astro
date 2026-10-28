@@ -22,7 +22,7 @@ const fmt = (d: Date) => d.toLocaleDateString('en-SG', { year: 'numeric', month:
 
 <Base>
   <section class="wrap hero">
-    <p class="eyebrow">Between Sujood and Syscalls</p>
+    <p class="eyebrow">~/between-sujood-and-syscalls</p>
     <h1>Ahmad Abdillah</h1>
     <p class="lede">
       Essays on deen, craft, and the machine. Written from Singapore, where the
@@ -30,7 +30,7 @@ const fmt = (d: Date) => d.toLocaleDateString('en-SG', { year: 'numeric', month:
     </p>
   </section>
 
-  <section class="band band-light">
+  <section class="band band-paper">
     <div class="wrap">
       <p class="kicker">Reading by interest</p>
       <div class="buckets">
@@ -61,7 +61,7 @@ const fmt = (d: Date) => d.toLocaleDateString('en-SG', { year: 'numeric', month:
     </div>
   </section>
 
-  <section class="band band-dark">
+  <section class="band band-ground">
     <div class="wrap">
       <p class="kicker">Topics I keep returning to</p>
       <ol class="topics">
@@ -74,7 +74,7 @@ const fmt = (d: Date) => d.toLocaleDateString('en-SG', { year: 'numeric', month:
     </div>
   </section>
 
-  <section class="band band-dark-b">
+  <section class="band band-raised">
     <div class="wrap">
       <p class="kicker">Short notes</p>
       {notes.length === 0 ? (
@@ -93,7 +93,7 @@ const fmt = (d: Date) => d.toLocaleDateString('en-SG', { year: 'numeric', month:
     </div>
   </section>
 
-  <section class="band band-dark-c">
+  <section class="band band-ground">
     <div class="wrap">
       <p class="kicker">Reading</p>
       {reading.length === 0 ? (
@@ -112,7 +112,7 @@ const fmt = (d: Date) => d.toLocaleDateString('en-SG', { year: 'numeric', month:
     </div>
   </section>
 
-  <section class="band band-light">
+  <section class="band band-raised">
     <div class="wrap">
       <p class="kicker">Where this comes from</p>
       <p class="origin">
@@ -121,13 +121,21 @@ const fmt = (d: Date) => d.toLocaleDateString('en-SG', { year: 'numeric', month:
         inward, on work, sincerity, and what the tradition has to say about both.
       </p>
       <p><a href="/about/">More about me</a></p>
-      <h2 class="closing">May it be of benefit.</h2>
+    </div>
+  </section>
+
+  <section class="band closing-band">
+    <div class="wrap">
+      <h2 class="closing"><span class="orn" aria-hidden="true">&#1758;</span> May it be of benefit.</h2>
     </div>
   </section>
 </Base>
 
 <style>
-  .hero { padding-block: clamp(3rem, 9vw, 6.5rem) clamp(2.5rem, 6vw, 4.5rem); }
+  .hero {
+    padding-block: clamp(3rem, 9vw, 6.5rem) clamp(2.5rem, 6vw, 4.5rem);
+    background: var(--lattice) top left / 96px repeat;
+  }
   .hero h1 {
     font-family: var(--font-display);
     font-size: clamp(3.4rem, 11vw, 7.5rem);
@@ -136,7 +144,11 @@ const fmt = (d: Date) => d.toLocaleDateString('en-SG', { year: 'numeric', month:
     margin: 0.6rem 0 1.6rem;
     max-width: 8ch;
   }
-  .band-light { padding-block: clamp(3rem, 7vw, 5rem); }
+  .band-paper, .band-ground, .band-raised { padding-block: clamp(3rem, 7vw, 5rem); }
+  :global(.band-paper) .bucket-label { color: rgba(32, 26, 18, 0.55); }
+  :global(.band-paper) .bucket-desc { color: rgba(32, 26, 18, 0.74); }
+  :global(.band-paper) .pending { color: rgba(32, 26, 18, 0.45); }
+  :global(.band-paper) .item-title { color: #201a12; }
   .buckets {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
@@ -144,11 +156,13 @@ const fmt = (d: Date) => d.toLocaleDateString('en-SG', { year: 'numeric', month:
   }
   .bucket-label {
     color: var(--text-muted);
-    font-size: 0.9rem;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
     margin: 0 0 0.6rem;
   }
-  .bucket .item-title { display: block; color: var(--text); }
-  .bucket .item-title:hover { color: var(--accent); text-decoration: none; }
+  .bucket .item-title { display: block; }
   .pending { color: var(--text-muted); }
   .bucket-desc { color: var(--text-secondary); font-size: 0.95rem; margin: 0.5rem 0 0; }
 
@@ -164,27 +178,29 @@ const fmt = (d: Date) => d.toLocaleDateString('en-SG', { year: 'numeric', month:
     font-family: var(--font-display);
     font-size: 1.35rem;
     line-height: 1.2;
-    color: var(--band-heading);
+    color: var(--text);
   }
   .topic-num {
     font-family: var(--font-mono);
     font-size: 0.78rem;
-    color: var(--band-meta);
+    color: var(--machine);
     margin-right: 0.6rem;
     vertical-align: 0.15em;
   }
-  .empty { color: var(--band-meta); max-width: 34rem; }
+  .empty { color: var(--text-muted); max-width: 34rem; }
   .rows { list-style: none; margin: 0; padding: 0; }
   .rows li + li { margin-top: 1.8rem; }
-  .rows .meta { color: var(--band-meta); }
-  .note-body { color: var(--band-text); max-width: 40rem; }
+  .note-body { color: var(--text-secondary); max-width: 40rem; }
   .note-body p { margin: 0.4rem 0 0; }
   .more { margin: 2rem 0 0; font-size: 0.92rem; }
   .origin { color: var(--text-secondary); max-width: 36rem; }
+  .closing-band { text-align: center; }
   .closing {
     font-family: var(--font-display);
     font-size: clamp(1.9rem, 4.5vw, 3rem);
     letter-spacing: -0.03em;
-    margin: 3rem 0 0;
+    margin: 0;
+    color: var(--text);
   }
+  .orn { color: var(--accent); margin-right: 0.4rem; }
 </style>

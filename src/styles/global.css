@@ -1,54 +1,60 @@
-/* Design tokens and shared components.
-   Palette and type system modeled on taeho.io: warm paper ground,
-   Instrument Serif display, IBM Plex Sans body, terracotta accent. */
+/* ── Theme: "Tahajjud Terminal" ─────────────────────────────────────
+   The site sits between two worlds, so the theme holds two voices:
+   sujood  = night ground, lamp amber, Instrument Serif display,
+             an eight-point-star geometric substrate
+   syscall = IBM Plex Mono for labels, dates, kickers, the status line
+   Dark is the default (the last third of the night); a warm paper
+   mode rides prefers-color-scheme for daylight reading. */
 
 :root {
-  --bg: #f7f2ea;
-  --bg-deep: #efe9de;
-  --text: #13100d;
-  --text-secondary: rgba(19, 16, 13, 0.7);
-  --text-muted: rgba(19, 16, 13, 0.56);
-  --accent: #8d5a3b;
-  --accent-strong: #9b6646;
-  --accent-soft: rgba(141, 90, 59, 0.12);
-  --border: rgba(19, 16, 13, 0.12);
-  --selection: rgba(141, 90, 59, 0.18);
+  --bg: #0f0d0b;
+  --bg-raised: #16130f;
+  --bg-paper: #f4eddd;
+  --bg-paper-deep: #e2d6ba;
+  --text: #efe8da;
+  --text-secondary: rgba(239, 232, 218, 0.72);
+  --text-muted: rgba(239, 232, 218, 0.52);
+  --accent: #dfa75f;          /* lamp amber */
+  --accent-deep: #b97f3e;
+  --accent-soft: rgba(223, 167, 95, 0.12);
+  --machine: #93a7bd;         /* slate, the terminal voice */
+  --border: rgba(239, 232, 218, 0.14);
+  --selection: rgba(223, 167, 95, 0.25);
   --page-bg:
-    radial-gradient(circle at top left, rgba(141, 90, 59, 0.12), transparent 32%),
-    linear-gradient(180deg, #f7f2ea 0%, #f2ede3 46%, #efe9de 100%);
-  /* Full-bleed dark bands, as on the taeho.io home sections */
-  --band-a: #12100f;
-  --band-b: #1a1816;
-  --band-c: #0f0d0b;
-  --band-text: rgba(247, 242, 234, 0.68);
-  --band-heading: #f7f2ea;
-  --band-meta: rgba(255, 255, 255, 0.54);
-  --band-hover: #d7b08c;
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(223, 167, 95, 0.08), transparent 60%),
+    #0f0d0b;
   --font-display: 'Instrument Serif', Georgia, serif;
   --font-body: 'IBM Plex Sans', system-ui, sans-serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
   --content: 46rem;
   --gutter: clamp(1.25rem, 4vw, 2rem);
+  /* eight-point-star lattice: two squares, one rotated 45deg */
+  --lattice: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96' viewBox='0 0 96 96'%3E%3Cg fill='none' stroke='%23dfa75f' stroke-opacity='0.07'%3E%3Crect x='28' y='28' width='40' height='40'/%3E%3Crect x='28' y='28' width='40' height='40' transform='rotate(45 48 48)'/%3E%3C/g%3E%3C/svg%3E");
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: light) {
   :root {
-    --bg: #120f0d;
-    --bg-deep: #1a1512;
-    --text: #f3ecdf;
-    --text-secondary: rgba(243, 236, 223, 0.76);
-    --text-muted: rgba(243, 236, 223, 0.6);
-    --accent: #c1845d;
-    --accent-strong: #d49269;
-    --accent-soft: rgba(193, 132, 93, 0.16);
-    --border: rgba(243, 236, 223, 0.16);
-    --selection: rgba(193, 132, 93, 0.28);
-    --page-bg: #120f0d;
+    --bg: #f4eddd;
+    --bg-raised: #ece2cd;
+    --bg-paper: #fbf7ec;
+    --bg-paper-deep: #efe6d2;
+    --text: #201a12;
+    --text-secondary: rgba(32, 26, 18, 0.74);
+    --text-muted: rgba(32, 26, 18, 0.55);
+    --accent: #96652f;
+    --accent-deep: #7a5025;
+    --accent-soft: rgba(150, 101, 47, 0.12);
+    --machine: #46617c;
+    --border: rgba(32, 26, 18, 0.16);
+    --selection: rgba(150, 101, 47, 0.22);
+    --page-bg:
+      radial-gradient(ellipse 80% 50% at 50% -10%, rgba(150, 101, 47, 0.09), transparent 60%),
+      #f4eddd;
   }
 }
 
 * { box-sizing: border-box; }
-html { color-scheme: light dark; scroll-behavior: smooth; }
+html { color-scheme: dark light; scroll-behavior: smooth; }
 body {
   margin: 0;
   background: var(--page-bg);
@@ -59,7 +65,7 @@ body {
 }
 ::selection { background: var(--selection); }
 a { color: var(--accent); text-decoration: none; }
-a:hover { color: var(--accent-strong); text-decoration: underline; text-underline-offset: 3px; }
+a:hover { color: var(--accent-deep); text-decoration: underline; text-underline-offset: 3px; }
 h1, h2, h3 { font-weight: 400; }
 img, pre { max-width: 100%; }
 pre { overflow-x: auto; }
@@ -70,23 +76,16 @@ pre { overflow-x: auto; }
   padding-inline: var(--gutter);
 }
 
-.eyebrow {
-  color: var(--text-muted);
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
+/* mono voice: kickers, eyebrows, dates, the status line */
+.eyebrow, .kicker, .meta, .mono {
+  font-family: var(--font-mono);
   font-size: 0.78rem;
-  font-family: var(--font-body);
-  margin: 0;
-}
-
-.kicker {
-  color: var(--accent);
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  font-size: 0.78rem;
-  font-family: var(--font-body);
-  margin: 0 0 1.25rem;
 }
+.eyebrow { color: var(--machine); margin: 0; }
+.kicker { color: var(--accent); margin: 0 0 1.4rem; }
+.meta { color: var(--text-muted); letter-spacing: 0.06em; text-transform: none; font-size: 0.84rem; }
 
 .lede {
   color: var(--text-secondary);
@@ -94,18 +93,23 @@ pre { overflow-x: auto; }
   max-width: 36rem;
 }
 
-/* Full-bleed home sections */
+/* Full-bleed sections. "paper" bands flip to the manuscript side. */
 .band { padding-block: clamp(3.5rem, 8vw, 6rem); }
-.band-dark { background: var(--band-a); color: var(--band-text); }
-.band-dark-b { background: var(--band-b); color: var(--band-text); }
-.band-dark-c { background: var(--band-c); color: var(--band-text); }
-.band-dark .kicker, .band-dark-b .kicker, .band-dark-c .kicker {
-  color: var(--band-hover);
+/* The paper band is always the manuscript: ink on cream, both schemes. */
+.band-paper {
+  background:
+    var(--lattice) bottom right / 96px repeat,
+    linear-gradient(180deg, var(--bg-paper), var(--bg-paper-deep));
+  color: #201a12;
 }
-.band-dark a, .band-dark-b a, .band-dark-c a { color: var(--band-heading); }
-.band-dark a:hover, .band-dark-b a:hover, .band-dark-c a:hover {
-  color: var(--band-hover);
-}
+.band-paper .kicker { color: var(--accent-deep); }
+.band-paper a { color: #201a12; }
+.band-paper a:hover { color: var(--accent-deep); }
+.band-ground { background: var(--bg); color: var(--text-secondary); }
+.band-raised { background: var(--bg-raised); color: var(--text-secondary); }
+.band-ground .kicker, .band-raised .kicker { color: var(--accent); }
+.band-ground a, .band-raised a { color: var(--text); }
+.band-ground a:hover, .band-raised a:hover { color: var(--accent); }
 
 /* Essay/article prose */
 .prose > * + * { margin-top: 1.4em; }
@@ -134,6 +138,13 @@ pre { overflow-x: auto; }
 .prose em { font-style: italic; }
 .prose strong { font-weight: 600; }
 .prose hr { border: none; border-top: 1px solid var(--border); margin: 2.5em 0; }
+.prose code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  background: var(--accent-soft);
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+}
 
 /* Shared list rows */
 .item-title {
@@ -141,8 +152,4 @@ pre { overflow-x: auto; }
   font-size: 1.45rem;
   line-height: 1.15;
   letter-spacing: -0.02em;
-}
-.meta {
-  color: var(--text-muted);
-  font-size: 0.85rem;
 }
